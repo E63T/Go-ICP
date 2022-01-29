@@ -8,10 +8,14 @@ Alexander Vasilevskiy.
 Jiaolong Yang <yangjiaolong@gmail.com>
 ****************************************************************/
 
-#ifndef JLY_3DDT_H
-#define JLY_3DDT_H
+#pragma once
+#include <pcl/point_cloud.h>
 
-#define infty 32767 // Max value for a signed short (2 bytes / 16 bits)
+
+namespace goicp
+{
+
+constexpr static int16_t infty = 32767;
 
 typedef struct DEucl {
  int v,h;
@@ -97,6 +101,7 @@ void Array3d<T>::printArrayDE(int x)
 typedef Array3d<DEucl3D> Array3dDEucl3D;
 typedef Array3d<float> Array3dfloat;
 
+template<typename T>
 class DT3D{
 public:
 	DT3D();
@@ -104,10 +109,11 @@ public:
 	double scale;
 	double expandFactor;
 	double xMin, xMax, yMin, yMax, zMin, zMax;
-	void Build(double* x, double* y, double* z, int num);
+	void Build(typename pcl::PointCloud<T>::Ptr&);
 	float Distance(double x, double y, double z);
 private:
 	Array3dDEucl3D A;
 };
 
-#endif
+
+} // namespace goicp

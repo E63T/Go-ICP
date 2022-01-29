@@ -15,6 +15,7 @@ Jiaolong Yang <yangjiaolong@gmail.com>
 #include <memory.h>
 
 #include "jly_3ddt.h"
+using namespace goicp;
 
 #define FALSE 0
 #define TRUE 1
@@ -881,23 +882,27 @@ void DistanceTransform3Dfloat(Array3dDEucl3D& A, float d1,float d2,float d3){
 //
 // ***************************
 
-DT3D::DT3D()
+template<typename T>
+DT3D<T>::DT3D()
 {
 	A.data = NULL;
 }
 
-void DT3D::Build(double* _x, double* _y, double* _z, int num)
+template<typename T>
+void DT3D<T>::Build(typename pcl::PointCloud<T>::Ptr& pc)
 {
-	xMin=_x[0]; xMax=_x[0]; yMin=_y[0]; yMax=_y[0]; zMin=_z[0]; zMax=_z[0];
+  auto& pts = pc->points;
+	xMin=pts[0].x; xMax=pts[0].x; yMin=pts[0].y; yMax=pts[0].y; zMin=pts[0].z; zMax=pts[0].z;
 	int i;
-	for(i = 1; i < num; i ++)
+	for(i = 1; i < pts.size(); i++)
 	{
-		if(xMin > _x[i]) xMin = _x[i];
-		if(xMax < _x[i]) xMax = _x[i];
-		if(yMin > _y[i]) yMin = _y[i];
-		if(yMax < _y[i]) yMax = _y[i];
-		if(zMin > _z[i]) zMin = _z[i];
-		if(zMax < _z[i]) zMax = _z[i];
+    auto _x = pts[i].x, _y = pts[i].y, _z = pts[i].z;
+		if(xMin > _x) xMin = _x;
+		if(xMax < _x) xMax = _x;
+		if(yMin > _y) yMin = _y;
+		if(yMax < _y) yMax = _y;
+		if(zMin > _z) zMin = _z;
+		if(zMax < _z) zMax = _z;
 	}
 
 	double xCenter = (xMin+xMax)/2;
@@ -949,11 +954,12 @@ void DT3D::Build(double* _x, double* _y, double* _z, int num)
 			}
 		}
 	}
-	for(i = 0; i < num; i++)
+	for(i = 0; i < pts.size(); i++)
 	{
-		x = ROUND((_x[i]-xMin)*scale);
-		y = ROUND((_y[i]-yMin)*scale);
-		z = ROUND((_z[i]-zMin)*scale);
+    auto _x = pts[i].x, _y = pts[i].y, _z = pts[i].z;
+		x = ROUND((_x-xMin)*scale);
+		y = ROUND((_y-yMin)*scale);
+		z = ROUND((_z-zMin)*scale);
 
 		if(x<0 || x>=Xdim || y<0 || y>=Ydim || z<0 || z>=Zdim)
 			continue;
@@ -978,7 +984,8 @@ void DT3D::Build(double* _x, double* _y, double* _z, int num)
 	}
 }
 
-float DT3D::Distance(double _x, double _y, double _z)
+template<typename T>
+float DT3D<T>::Distance(double _x, double _y, double _z)
 {
 	int x, y, z;
 	x = ROUND((_x-xMin)*scale);
@@ -1020,7 +1027,7 @@ float DT3D::Distance(double _x, double _y, double _z)
 	{
 		c = z-SIZE+1;
 		z = SIZE-1;
-	}
+  }
 		
 	return sqrt(a*a+b*b+c*c)/scale + A.data[z][y][x].distance;
 }

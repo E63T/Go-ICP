@@ -22,22 +22,25 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *********************************************************************/
 
-#ifndef JLY_GOICP_H
-#define JLY_GOICP_H
+#pragma once
 
 #include <queue>
-using namespace std;
 
-#include "jly_icp3d.hpp"
 #include "jly_3ddt.h"
 
 #define PI 3.1415926536
-#define SQRT3 1.732050808
+#define SQRT3 1.732050808 
+// TODO : Remove constants or move it to .cpp file
 
-typedef struct _POINT3D
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl/registration/icp.h>
+#include <Eigen/Core>
+
+namespace goicp
 {
-	float x, y, z;
-}POINT3D;
+
+
 
 typedef struct _ROTNODE
 {
@@ -75,18 +78,22 @@ typedef struct _TRANSNODE
 
 /********************************************************/
 
-#define MAXROTLEVEL 20
+constexpr static int MAXROTLEVEL = 20;
 
+template<typename Point>
 class GoICP
 {
 public:
-	int Nm, Nd;
-	POINT3D * pModel, * pData;
+	using PointCloudPtr = typename pcl::PointCloud<Point>::Ptr;
+
+	PointCloudPtr pModel, pData, pTransformed;
 
 	ROTNODE initNodeRot;
 	TRANSNODE initNodeTrans;
 
-	DT3D dt;
+	DT3D<Point> dt;
+
+	int maxIcpIter;
 
 	ROTNODE optNodeRot;
 	TRANSNODE optNodeTrans;
@@ -100,8 +107,8 @@ public:
 	float icpThresh;
 
 	float optError;
-	Matrix optR;
-	Matrix optT;
+	Eigen::Matrix3d optR;
+	Eigen::Vector3d optT;
 
 	clock_t clockBegin;
 
@@ -111,25 +118,19 @@ public:
 
 private:
 	//temp variables
-	float * normData;
-	float * minDis;
-	float** maxRotDis;
+	std::vector<float> normData;
+	std::vector<float> minDis;
+	std::vector<std::vector<float>> maxRotDis;
 	float * maxRotDisL;
-	POINT3D * pDataTemp;
-	POINT3D * pDataTempICP;
 	
-	ICP3D<float> icp3d;
-	float * M_icp;
-	float * D_icp;
+	pcl::IterativeClosestPoint<Point, Point, float> icp;
 
-	float ICP(Matrix& R_icp, Matrix& t_icp);
+	float ICP(Eigen::Matrix3d& R_icp, Eigen::Vector3d& t_icp);
 	float InnerBnB(float* maxRotDisL, TRANSNODE* nodeTransOut);
 	float OuterBnB();
 	void Initialize();
-	void Clear();
-
 };
 
 /********************************************************/
 
-#endif
+} // namespace goicp
